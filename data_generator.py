@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from pycocotools.coco import COCO
 import numpy as np
 import os
@@ -9,7 +10,7 @@ from groundtruth import get_ground_truth
 ANNO_FILE = "./coco2017/annotations/person_keypoints_train2017.json"
 IMG_DIR = "./coco2017/train2017"
 NUM_KP = 17
-IMAGE_SHAPE = (416, 416, 3)
+IMAGE_SHAPE = (403, 403, 3)
 NUM_EDGES = 16
 
 
@@ -19,10 +20,12 @@ class DataGenerator(object):
         self.img_ids = list(self.coco.imgs.keys())
         self.datasetlen = len(self.img_ids)
         self.id = 0
+        self.counter = 1
 
     def get_one_sample(self, give_id=None, is_aug=True):
         if self.id == self.datasetlen:
             self.id = 0
+            self.counter = 1
         if give_id is None:
             img_id = self.img_ids[self.id]
         else:
@@ -103,6 +106,7 @@ class DataGenerator(object):
                 sample = self.get_one_sample()
                 while sample is None:  # not to train the images with no instance
                     sample = self.get_one_sample()
+                    self.counter += 1
                 imgs_batch[i] = sample[0]
                 kp_maps_batch[i] = sample[1]
                 short_offsets_batch[i] = sample[2]
@@ -112,12 +116,14 @@ class DataGenerator(object):
                 crowd_mask_batch[i] = sample[6]
                 unannotated_mask_batch[i] = sample[7]
                 overlap_mask_batch[i] = sample[8]
+                self.counter += 1
 
             yield [imgs_batch, kp_maps_batch, short_offsets_batch, mid_offsets_batch, long_offsets_batch,
                    seg_mask_batch, crowd_mask_batch, unannotated_mask_batch, overlap_mask_batch]
 
-
+"""
 datagen = DataGenerator()
 
-for el in datagen.gen_batch():
-    print(len(el[0]))
+for i in range(10):
+    data = next(datagen.gen_batch())
+"""

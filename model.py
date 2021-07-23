@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-IMAGE_SHAPE = (416, 416, 3)
+IMAGE_SHAPE = (403, 403, 3)
 NUM_KP = 17
 NUM_EDGES = 16
 
@@ -11,10 +11,9 @@ def resnet50_base():
 
     a = tf.keras.layers.Conv2D(17, kernel_size=(1, 1), activation="sigmoid")(resnet_output)
     kp_maps = tf.keras.layers.UpSampling2D(size=(31, 31), interpolation="bilinear")(a)
-
+    """
     b = tf.keras.layers.Conv2D(2*NUM_KP, kernel_size=(1, 1), activation=None)(resnet_output)
     short_offsets = tf.keras.layers.UpSampling2D(size=(31, 31), interpolation="bilinear")(b)
-
     c = tf.keras.layers.Conv2D(4*NUM_EDGES, kernel_size=(1, 1), activation=None)(resnet_output)
     mid_offsets = tf.keras.layers.UpSampling2D(size=(31, 31), interpolation="bilinear")(c)
 
@@ -23,9 +22,8 @@ def resnet50_base():
 
     e = tf.keras.layers.Conv2D(1, kernel_size=(1, 1), activation="sigmoid")(resnet_output)
     seg_mask = tf.keras.layers.UpSampling2D(size=(31, 31), interpolation="bilinear")(e)
-
-    posenet = tf.keras.models.Model(inputs=resnet.input, outputs=[kp_maps, short_offsets, mid_offsets, long_offsets,
-                                                                  seg_mask])
+    """
+    posenet = tf.keras.models.Model(inputs=resnet.input, outputs=kp_maps)
     return posenet
 
 

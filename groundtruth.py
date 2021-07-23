@@ -1,6 +1,6 @@
 import numpy as np
 
-IMAGE_SHAPE = (416, 416)
+IMAGE_SHAPE = (403, 403)
 NUM_KP = 17
 KP_RADIUS = 32
 EDGES = [
