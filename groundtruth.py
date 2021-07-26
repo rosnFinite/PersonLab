@@ -1,28 +1,7 @@
 import numpy as np
+from config import config
 
-IMAGE_SHAPE = (403, 403)
-NUM_KP = 17
-KP_RADIUS = 32
-EDGES = [
-    (0, 14),
-    (0, 13),
-    (0, 4),
-    (0, 1),
-    (14, 16),
-    (13, 15),
-    (4, 10),
-    (1, 7),
-    (10, 11),
-    (7, 8),
-    (11, 12),
-    (8, 9),
-    (4, 5),
-    (1, 2),
-    (5, 6),
-    (2, 3)
-]
-NUM_EDGES = len(EDGES)
-map_shape = (IMAGE_SHAPE[0], IMAGE_SHAPE[1])
+map_shape = (config.IMG_SHAPE[0], config.IMG_SHAPE[1])
 idx = np.rollaxis(np.indices(map_shape[::-1]), 0, 3).transpose((1, 0, 2))
 
 
@@ -47,7 +26,7 @@ def get_ground_truth(instance_masks, all_keypoints):
 
 def get_keypoint_discs(all_keypoints):
     discs = [[] for _ in range(len(all_keypoints))]
-    for i in range(NUM_KP):
+    for i in range(config.NUM_KP):
 
         centers = [keypoints[i, :2] for keypoints in all_keypoints if keypoints[i, 2] > 0]
         dists = np.zeros(map_shape + (len(centers),))
@@ -60,7 +39,7 @@ def get_keypoint_discs(all_keypoints):
         count = 0
         for j in range(len(all_keypoints)):
             if all_keypoints[j][i, 2] > 0:
-                discs[j].append(np.logical_and(inst_id == count, dists[:, :, count] <= KP_RADIUS))
+                discs[j].append(np.logical_and(inst_id == count, dists[:, :, count] <= config.KP_RADIUS))
                 count += 1
             else:
                 discs[j].append(np.array([]))
@@ -68,10 +47,8 @@ def get_keypoint_discs(all_keypoints):
 
 
 def make_keypoint_maps(all_keypoints, discs):
-    # map_shape = (config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
-    # print(len(discs[0][0]))
-    kp_maps = np.zeros(map_shape + (NUM_KP,))
-    for i in range(NUM_KP):
+    kp_maps = np.zeros(map_shape + (config.NUM_KP,))
+    for i in range(config.NUM_KP):
         for j in range(len(discs)):
             if all_keypoints[j][i, 2] > 0:
                 kp_maps[discs[j][i], i] = 1.
@@ -79,8 +56,7 @@ def make_keypoint_maps(all_keypoints, discs):
 
 
 def compute_short_offsets(all_keypoints, discs):
-    # map_shape = (config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
-    r = KP_RADIUS
+    r = config.KP_RADIUS
     x = np.tile(np.arange(r, -r - 1, -1), [2 * r + 1, 1])
     y = x.transpose()
     m = np.sqrt(x * x + y * y) <= r
@@ -98,9 +74,8 @@ def compute_short_offsets(all_keypoints, discs):
         center[0] - r + from_left:center[0] + r + 1 - from_right, :][cropped_disc, :] = \
             kp_circle[from_top:2 * r + 1 - from_bottom, from_left:2 * r + 1 - from_right, :][cropped_disc, :]
 
-    offsets = np.zeros(map_shape + (2 * NUM_KP,))
-    for i in range(NUM_KP):
-        # this_offset = np.zeros(shape=map_shape+(2,))
+    offsets = np.zeros(map_shape + (2 * config.NUM_KP,))
+    for i in range(config.NUM_KP):
         for j in range(len(all_keypoints)):
             if all_keypoints[j][i, 2] > 0:
                 copy_with_border_check(offsets[:, :, 2 * i:2 * i + 2], (all_keypoints[j][i, 0], all_keypoints[j][i, 1]),
@@ -110,37 +85,26 @@ def compute_short_offsets(all_keypoints, discs):
 
 
 def compute_mid_offsets(all_keypoints, discs):
-    # map_shape = (config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
-    offsets = np.zeros(map_shape + (4 * NUM_EDGES,))
-    for i, edge in enumerate((EDGES + [edge[::-1] for edge in EDGES])):
-        # this_offset = np.zeros(map_shape+(2,))
+    offsets = np.zeros(map_shape + (4 * len(config.EDGES),))
+    for i, edge in enumerate((config.EDGES + [edge[::-1] for edge in config.EDGES])):
         for j in range(len(all_keypoints)):
             if all_keypoints[j][edge[0], 2] > 0 and all_keypoints[j][edge[1], 2] > 0:
-                # idx = np.rollaxis(np.indices(map_shape), 0, 3).transpose((1,0,2))
-                # dists = np.array([[ all_keypoints[j][edge[1],0], all_keypoints[j][edge[1],1] ]]) - idx
                 m = discs[j][edge[0]]
                 dists = [[all_keypoints[j][edge[1], 0], all_keypoints[j][edge[1], 1]]] - idx[m, :]
-                # this_offset[m,:] = dists[m,:]
-                # offsets[:,:,2*i:2*i+2] = this_offset
                 offsets[m, 2 * i:2 * i + 2] = dists
 
     return offsets
 
 
 def compute_long_offsets(all_keypoints, instance_masks):
-    # map_shape = (config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
     instance_masks = instance_masks.astype('bool')
-    offsets = np.zeros(map_shape + (2 * NUM_KP,))
-    for i in range(NUM_KP):
-        # this_offset = np.zeros(map_shape+(2,))
+    offsets = np.zeros(map_shape + (2 * config.NUM_KP,))
+    for i in range(config.NUM_KP):
         for j in range(len(all_keypoints)):
             if all_keypoints[j][i, 2] > 0:
-                # idx = np.rollaxis(np.indices(map_shape), 0, 3).transpose((1,0,2))
                 m = instance_masks[:, :, j]
                 dists = [[all_keypoints[j][i, 0], all_keypoints[j][i, 1]]] - idx[m, :]
-                # this_offset[m,:] = dists[m,:]
                 offsets[m, 2 * i:2 * i + 2] = dists
-        # offsets[:,:,2*i:2*i+2]
 
     overlap = np.sum(instance_masks, axis=-1) >= 2
     offsets[overlap, :] = 0.

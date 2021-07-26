@@ -5,13 +5,15 @@ import os
 import cv2
 from augmentation import AugmentationSelection, Transformer
 from groundtruth import get_ground_truth
+from config import config
 
-# Path of Annotation file
-ANNO_FILE = "./coco2017/annotations/person_keypoints_train2017.json"
-IMG_DIR = "./coco2017/train2017"
-NUM_KP = 17
-IMAGE_SHAPE = (403, 403, 3)
-NUM_EDGES = 16
+# Path of Annotation file TRAIN
+# ANNO_FILE = "./coco2017/annotations/person_keypoints_train2017.json"
+# IMG_DIR = "./coco2017/train2017"
+
+# Path to Annotation file VAL
+ANNO_FILE = "./coco2017/annotations/person_keypoints_val2017.json"
+IMG_DIR = "./coco2017/val2017"
 
 
 class DataGenerator(object):
@@ -56,7 +58,7 @@ class DataGenerator(object):
             self.id += 1
             return None
 
-        kp = np.reshape(keypoints, (-1, NUM_KP, 3))
+        kp = np.reshape(keypoints, (-1, config.NUM_KP, 3))
         instance_masks = np.stack(instance_masks).transpose((1, 2, 0))
         overlap_mask = instance_masks.sum(axis=-1) > 1
         seg_mask = np.logical_or(crowd_mask, np.sum(instance_masks, axis=-1))
@@ -90,13 +92,13 @@ class DataGenerator(object):
                 crowd_mask.astype('float32'), unannotated_mask.astype('float32'), overlap_mask.astype('float32')]
 
     def gen_batch(self, batch_size=4):
-        h, w, c = IMAGE_SHAPE
+        h, w, c = config.IMG_SHAPE
         while True:
             imgs_batch = np.zeros((batch_size, h, w, c))
-            kp_maps_batch = np.zeros((batch_size, h, w, NUM_KP))
-            short_offsets_batch = np.zeros((batch_size, h, w, 2 * NUM_KP))
-            mid_offsets_batch = np.zeros((batch_size, h, w, 4 * NUM_EDGES))
-            long_offsets_batch = np.zeros((batch_size, h, w, 2 * NUM_KP))
+            kp_maps_batch = np.zeros((batch_size, h, w, config.NUM_KP))
+            short_offsets_batch = np.zeros((batch_size, h, w, 2 * config.NUM_KP))
+            mid_offsets_batch = np.zeros((batch_size, h, w, 4 * len(config.NUM_EDGES)))
+            long_offsets_batch = np.zeros((batch_size, h, w, 2 * config.NUM_KP))
             seg_mask_batch = np.zeros((batch_size, h, w, 1))
             crowd_mask_batch = np.zeros((batch_size, h, w, 1))
             unannotated_mask_batch = np.zeros((batch_size, h, w, 1))
@@ -120,10 +122,3 @@ class DataGenerator(object):
 
             yield [imgs_batch, kp_maps_batch, short_offsets_batch, mid_offsets_batch, long_offsets_batch,
                    seg_mask_batch, crowd_mask_batch, unannotated_mask_batch, overlap_mask_batch]
-
-"""
-datagen = DataGenerator()
-
-for i in range(10):
-    data = next(datagen.gen_batch())
-"""

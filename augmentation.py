@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import cos, sin, pi
 from groundtruth import map_coco_to_personlab
+from config import config
 
 flip_prob = 0.5
 max_degree = 30.
@@ -11,7 +12,7 @@ min_scale = 0.8
 max_offset = 20.0
 target_dist = 0.8
 scale_prob = 1.
-IMAGE_SHAPE = (403, 403, 3)
+IMAGE_SHAPE = config.IMG_SHAPE
 RIGHT_KP = [1, 2, 3,  7,  8,  9, 13, 15]
 LEFT_KP = [4, 5, 6, 10, 11, 12, 14, 16]
 
