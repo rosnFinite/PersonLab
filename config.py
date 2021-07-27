@@ -56,4 +56,4 @@ class config:
 
     NUM_EPOCHS = 1
 
-    BATCH_SIZE = 8
+    BATCH_SIZE = 4

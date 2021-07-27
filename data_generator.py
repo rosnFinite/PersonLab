@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 from pycocotools.coco import COCO
+import sys
 import numpy as np
 import os
 import cv2
@@ -8,17 +8,21 @@ from groundtruth import get_ground_truth
 from config import config
 
 # Path of Annotation file TRAIN
-# ANNO_FILE = "./coco2017/annotations/person_keypoints_train2017.json"
-# IMG_DIR = "./coco2017/train2017"
+ANNO_TRAIN_FILE = "./coco2017/annotations/person_keypoints_train2017.json"
+IMG_TRAIN_DIR = "./coco2017/train2017"
 
 # Path to Annotation file VAL
-ANNO_FILE = "./coco2017/annotations/person_keypoints_val2017.json"
-IMG_DIR = "./coco2017/val2017"
+ANNO_VAL_FILE = "./coco2017/annotations/person_keypoints_val2017.json"
+IMG_VAL_DIR = "./coco2017/val2017"
 
 
 class DataGenerator(object):
-    def __init__(self):
-        self.coco = COCO(ANNO_FILE)
+    def __init__(self, train=True):
+        self.train = train
+        if self.train:
+            self.coco = COCO(ANNO_TRAIN_FILE)
+        else:
+            self.coco = COCO(ANNO_VAL_FILE)
         self.img_ids = list(self.coco.imgs.keys())
         self.datasetlen = len(self.img_ids)
         self.id = 0
@@ -32,7 +36,14 @@ class DataGenerator(object):
             img_id = self.img_ids[self.id]
         else:
             img_id = give_id
-        filepath = os.path.join(IMG_DIR, self.coco.imgs[img_id]["file_name"])
+        try:
+            if self.train:
+                filepath = os.path.join(IMG_TRAIN_DIR, self.coco.imgs[img_id]["file_name"])
+            else:
+                filepath = os.path.join(IMG_VAL_DIR, self.coco.imgs[img_id]["file_name"])
+        except KeyError:
+            print("!! Dataset doesn't contain an image with given id " + str(img_id) + " !!")
+            sys.exit()
         img = cv2.imread(filepath)
         h, w, c = img.shape
         crowd_mask = np.zeros((h, w), dtype="bool")
@@ -97,7 +108,7 @@ class DataGenerator(object):
             imgs_batch = np.zeros((batch_size, h, w, c))
             kp_maps_batch = np.zeros((batch_size, h, w, config.NUM_KP))
             short_offsets_batch = np.zeros((batch_size, h, w, 2 * config.NUM_KP))
-            mid_offsets_batch = np.zeros((batch_size, h, w, 4 * len(config.NUM_EDGES)))
+            mid_offsets_batch = np.zeros((batch_size, h, w, 4 * len(config.EDGES)))
             long_offsets_batch = np.zeros((batch_size, h, w, 2 * config.NUM_KP))
             seg_mask_batch = np.zeros((batch_size, h, w, 1))
             crowd_mask_batch = np.zeros((batch_size, h, w, 1))
