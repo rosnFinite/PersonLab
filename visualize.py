@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import argparse
 from data_generator import DataGenerator
 from bilinear import refine
+from config import config
 
 
 # Suppress any warning corresponding to matplotlib
@@ -32,6 +33,11 @@ parser.add_argument("-save",
                     dest="save",
                     default=False,
                     help="Additional option to save visualization as images")
+parser.add_argument("-kp",
+                    dest="kp",
+                    default=0,
+                    type=int,
+                    help="Changes visualized kyepoint by given id. [0 - 16]")
 args = parser.parse_args()
 
 if args.dataset == "validation":
@@ -46,6 +52,11 @@ if args.image_id is None:
     gt_data = datagen.get_one_sample(is_aug=False)
 elif args.image_id is not None:
     gt_data = datagen.get_one_sample(give_id=args.image_id, is_aug=False)
+
+if args.kp < 0 or args.kp > 16:
+    print("!! Keypoint ID is out of range [0-16] !!")
+    print("!! Default Keypoint has been chosen !!")
+    args.kp = 0
 
 if args.model is None:
     print("Loading model...")
@@ -79,12 +90,32 @@ for i in range(5):
     plt.tick_params(axis='both', which='both', length=0)
     plt.xticks([])
     plt.yticks([])
-    plt.imshow(gt_data[i+1][:, :, 0])
+    if i == 0:
+        plt.imshow(gt_data[i + 1][:, :, args.kp])
+    if i == 1 or i == 3:
+        plt.imshow(gt_data[i+1][:, :, 2 * args.kp])
+    if i == 2:
+        # Get Edges containing given keypoint
+        edges = [item+(index,) for index, item in enumerate(config.EDGES) if item[0] == args.kp or item[1] == args.kp]
+        plt.imshow(gt_data[i+1][:, :, 4*edges[0][2]])
+    if i == 4:
+        plt.imshow(gt_data[i + 1][:, :, 0])
+
 
     plt.subplot(gs[i+1, 1])
     plt.tick_params(axis='both', which='both', length=0)
     plt.xticks([])
     plt.yticks([])
-    plt.imshow(prediction[i][0][:, :, 0])
+    if i == 0:
+        plt.imshow(prediction[i][0][:, :,args.kp])
+    if i == 1 or i == 3:
+        plt.imshow(prediction[i][0][:, :, 2 * args.kp])
+    if i == 2:
+        # Get Edges containing given keypoint
+        edges = [item+(index,) for index, item in enumerate(config.EDGES) if item[0] == args.kp or item[1] == args.kp]
+        plt.imshow(prediction[i][0][:, :, 4*edges[0][2]])
+    if i == 4:
+        plt.imshow(prediction[i][0][:, :, 0])
+
 
 plt.show()
