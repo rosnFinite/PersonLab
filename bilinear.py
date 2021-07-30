@@ -76,9 +76,17 @@ def bilinear_sampler(x, v):
 
     return output
 
+"""
 def refine(inputs, num_steps=2):
     base, offsets = inputs
 
+    # sample bilinearly
+    for _ in range(num_steps):
+        base = base + bilinear_sampler(offsets, base)
+
+    return base
+"""
+def refine(base, offsets, num_steps=2):
     # sample bilinearly
     for _ in range(num_steps):
         base = base + bilinear_sampler(offsets, base)

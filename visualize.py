@@ -2,6 +2,7 @@ import os
 #Suppress Tensorflow console output
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+from model import get_model
 import tensorflow as tf
 import warnings
 import numpy as np
@@ -60,7 +61,9 @@ if args.kp < 0 or args.kp > 16:
 
 if args.model is None:
     print("Loading model...")
-    model = tf.keras.models.load_model("saved_model/model_combined", custom_objects={"refine": refine})
+    # model = tf.keras.models.load_model("saved_model/model_midlong_upsample_switch", custom_objects={"refine": refine})
+    model = get_model()
+    model.load_weights("saved_model/model_weights.h5")
     print("Finished loading model")
 elif args.model is not None:
     try:

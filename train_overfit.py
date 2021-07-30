@@ -9,7 +9,7 @@ from resnet50 import get_resnet50_base
 from loss_functions import hm_loss, short_offset_loss, mid_offset_loss, long_offset_loss, segmentation_loss
 from config import config
 
-datagen = DataGenerator(train=True)
+datagen = DataGenerator(train=False)
 
 steps_per_epoch = 64115//config.BATCH_SIZE
 """
@@ -55,22 +55,22 @@ for epoch in range(config.NUM_EPOCHS):
     print("\n** Epoch " + str(epoch))
     for x in range(steps_per_epoch):
         print("\rBatch " + str(x)+"/"+str(steps_per_epoch) + "   seen so far: " + str(x * config.BATCH_SIZE), end="")
-        batch = next(datagen.gen_batch(batch_size=config.BATCH_SIZE))
-        # batch = datagen.get_one_sample(give_id=785, is_aug=False)
-        input_imgs = batch[0].astype("float32")
+        # batch = next(datagen.gen_batch(batch_size=config.BATCH_SIZE))
+        batch = datagen.get_one_sample(give_id=785, is_aug=False)
+        input_imgs = np.array([batch[0].astype("float32")])
 
-        groundtruth = {"kp_maps": batch[1].astype("float32"),
-                       "short_offsets": batch[2].astype("float32"),
-                       "mid_offsets": batch[3].astype("float32"),
-                       "long_offsets": batch[4].astype("float32"),
-                       "seg_mask": batch[5].astype("float32"),
-                       "crowd_mask": batch[6].astype("float32"),
-                       "unannotated_mask": batch[7].astype("float32"),
-                       "overlap_mask": batch[8].astype("float32")}
+        groundtruth = {"kp_maps": np.array([batch[1].astype("float32")]),
+                       "short_offsets": np.array([batch[2].astype("float32")]),
+                       "mid_offsets": np.array([batch[3].astype("float32")]),
+                       "long_offsets": np.array([batch[4].astype("float32")]),
+                       "seg_mask": np.array([batch[5].astype("float32")]),
+                       "crowd_mask": np.array([batch[6].astype("float32")]),
+                       "unannotated_mask": np.array([batch[7].astype("float32")]),
+                       "overlap_mask": np.array([batch[8].astype("float32")])}
 
         kp_loss, short_loss, mid_loss, long_loss, seg_loss, combined_loss = train_step(input_imgs, groundtruth)
 
-        if x % 10 == 0:
+        if x % 100 == 0:
             print(
                 "\nCombined Training loss (for one batch): %.4f   seen so far: %d samples"
                 % (float(combined_loss), step * config.BATCH_SIZE)
@@ -90,8 +90,8 @@ for epoch in range(config.NUM_EPOCHS):
             print(
                 "-- Segmentation Loss : %.4f " % (float(seg_loss))
             )
-
-model.save("saved_model/model_combined")
+        if x % 1000 == 0:
+            model.save_weights("saved_model/model_weights.h5")
 
 
 
