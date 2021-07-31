@@ -1,16 +1,15 @@
 import os
-#Suppress Tensorflow console output
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 from model import get_model
-import tensorflow as tf
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from data_generator import DataGenerator
-from bilinear import refine
 from config import config
+import sys
+
+# Suppress Tensorflow console output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 # Suppress any warning corresponding to matplotlib
@@ -26,10 +25,11 @@ parser.add_argument("-id",
                     default=None,
                     type=int,
                     help="ID of the image to be visualized. Has to be inside given dataset")
-parser.add_argument("-model",
-                    dest="model",
+parser.add_argument("-weights",
+                    dest="weights",
                     default=None,
-                    help="Name of a model in ./saved_model to be loaded")
+                    type=str,
+                    help="Path to the weights to be loaded")
 parser.add_argument("-save",
                     dest="save",
                     default=False,
@@ -38,7 +38,7 @@ parser.add_argument("-kp",
                     dest="kp",
                     default=0,
                     type=int,
-                    help="Changes visualized kyepoint by given id. [0 - 16]")
+                    help="Changes visualized keypoint by given id. [0 - 16]")
 args = parser.parse_args()
 
 if args.dataset == "validation":
@@ -48,6 +48,8 @@ elif args.dataset == "train":
 else:
     print("!! Invalid dataset selected !!")
     print(args.dataset + " was selected but only [validation] or [train] available")
+    sys.exit()
+
 
 if args.image_id is None:
     gt_data = datagen.get_one_sample(is_aug=False)
@@ -59,16 +61,16 @@ if args.kp < 0 or args.kp > 16:
     print("!! Default Keypoint has been chosen !!")
     args.kp = 0
 
-if args.model is None:
+if args.weights is None:
     print("Loading model...")
-    # model = tf.keras.models.load_model("saved_model/model_midlong_upsample_switch", custom_objects={"refine": refine})
     model = get_model()
     model.load_weights("saved_model/model_weights.h5")
     print("Finished loading model")
-elif args.model is not None:
+elif args.weights is not None:
     try:
         print("Loading model...")
-        model = tf.keras.models.load_model("saved_model/"+args.model, custom_objects={"refine": refine})
+        model = get_model()
+        model.load_weights(args.weights)
         print("Finished loading model")
     except:
         print("!! Model doesn't exist !!")
@@ -76,20 +78,20 @@ elif args.model is not None:
 
 prediction = model(np.array([gt_data[0]]), training=False)
 
-fig = plt.figure(figsize=(6,14))
+fig = plt.figure(figsize=(14, 6))
 plt.axis("off")
-gs = fig.add_gridspec(6, 2, hspace=1)
+gs = fig.add_gridspec(2, 6, hspace=1)
 gs.update(wspace=0.1, hspace=0.2)
 
-#Input
-img_ax = plt.subplot(gs[0,0])
+# Input
+img_ax = plt.subplot(gs[0, 0])
 plt.tick_params(axis='both', which='both', length=0)
 plt.xticks([])
 plt.yticks([])
 plt.imshow(gt_data[0])
 
 for i in range(5):
-    plt.subplot(gs[i+1, 0])
+    plt.subplot(gs[0, i+1])
     plt.tick_params(axis='both', which='both', length=0)
     plt.xticks([])
     plt.yticks([])
@@ -105,7 +107,7 @@ for i in range(5):
         plt.imshow(gt_data[i + 1][:, :, 0])
 
 
-    plt.subplot(gs[i+1, 1])
+    plt.subplot(gs[1, i+1])
     plt.tick_params(axis='both', which='both', length=0)
     plt.xticks([])
     plt.yticks([])
