@@ -7,23 +7,23 @@ class config:
 
     KP_RADIUS = 32
 
-    KP_NAMES = ["Nase",
-               "Schulter(r)",
-               "Ellenbogen(r)",
-               "Handgelenk(r)",
-               "Schulter(l)",
-               "Ellenbogen(l)",
-               "Handgelenk(l)",
-               "Hüfte(r)",
-               "Knie(r)",
-               "Fußgelenk(r)",
-               "Hüfte(l)",
-               "Knie(l)",
-               "Fußgelenk(l)",
-               "Auge(r)",
-               "Auge(l)",
-               "Ohr(r)",
-               "Ohr(l)"]
+    KP_NAMES = ["Nase",#0
+               "Schulter(r)",#1
+               "Ellenbogen(r)",#2
+               "Handgelenk(r)",#3
+               "Schulter(l)",#4
+               "Ellenbogen(l)",#5
+               "Handgelenk(l)",#6
+               "Hüfte(r)",#7
+               "Knie(r)",#8
+               "Fußgelenk(r)",#9
+               "Hüfte(l)",#10
+               "Knie(l)",#11
+               "Fußgelenk(l)",#12
+               "Auge(r)",#13
+               "Auge(l)",#14
+               "Ohr(r)",#15
+               "Ohr(l)"]#16
 
     EDGES = [
         (0, 14),
@@ -57,3 +57,8 @@ class config:
     NUM_EPOCHS = 1
 
     BATCH_SIZE = 4
+
+    PEAK_THRESH = 0.001
+
+    INSTANCE_SEG_THRESH = 0.25
+

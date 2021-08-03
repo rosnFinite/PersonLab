@@ -27,6 +27,34 @@ if gpus:
         print(e)
 """
 
+
+def show_hm(gt, pred):
+    fig_hm = plt.figure(figsize=(14, 6))
+    plt.axis("off")
+    gs = fig_hm.add_gridspec(4, 10, hspace=1)
+    gs.update(wspace=0.1, hspace=0.2)
+
+    x = 0
+    y = 0
+    for i in range(config.NUM_KP):
+        if x < 10:
+            plt.subplot(gs[y, x])
+            plt.tick_params(axis='both', which='both', length=0)
+            plt.xticks([])
+            plt.yticks([])
+            plt.imshow(pred[0][:, :, i])
+
+            plt.subplot(gs[y, x+1])
+            plt.tick_params(axis='both', which='both', length=0)
+            plt.xticks([])
+            plt.yticks([])
+            plt.imshow(gt[1][:, :, i])
+            x += 2
+        else:
+            x = 0
+            y += 1
+    plt.show()
+
 @tf.function
 def train_step(img, y):
     with tf.GradientTape() as tape:
@@ -40,7 +68,7 @@ def train_step(img, y):
         combined_loss = 4*loss_value_kp + loss_value_short + 0.4*loss_value_mid + 0.1*loss_value_long + 2*loss_value_seg
     grads = tape.gradient(combined_loss, model.trainable_weights)
     optimizer.apply_gradients(zip(grads, model.trainable_weights))
-    return [loss_value_kp, loss_value_short, loss_value_mid, loss_value_long, loss_value_seg, combined_loss]
+    return [loss_value_kp, loss_value_short, loss_value_mid, loss_value_long, loss_value_seg, combined_loss, kp_pred]
 
 
 model = get_model()
@@ -68,7 +96,7 @@ for epoch in range(config.NUM_EPOCHS):
                        "unannotated_mask": np.array([batch[7].astype("float32")]),
                        "overlap_mask": np.array([batch[8].astype("float32")])}
 
-        kp_loss, short_loss, mid_loss, long_loss, seg_loss, combined_loss = train_step(input_imgs, groundtruth)
+        kp_loss, short_loss, mid_loss, long_loss, seg_loss, combined_loss, pred = train_step(input_imgs, groundtruth)
 
         if x % 100 == 0:
             print(
@@ -90,8 +118,10 @@ for epoch in range(config.NUM_EPOCHS):
             print(
                 "-- Segmentation Loss : %.4f " % (float(seg_loss))
             )
+            show_hm(gt=batch, pred=pred)
         if x % 1000 == 0:
-            model.save_weights("saved_model/model_weights.h5")
+            model.save_weights("saved_model/model_weights_785.h5")
+
 
 
 

@@ -64,7 +64,7 @@ if args.kp < 0 or args.kp > 16:
 if args.weights is None:
     print("Loading model...")
     model = get_model()
-    model.load_weights("saved_model/model_weights.h5")
+    model.load_weights("saved_model/model_weights_872.h5")
     print("Finished loading model")
 elif args.weights is not None:
     try:
@@ -121,6 +121,32 @@ for i in range(5):
         plt.imshow(prediction[i][0][:, :, 4*edges[0][2]])
     if i == 4:
         plt.imshow(prediction[i][0][:, :, 0])
+
+
+fig_hm = plt.figure(figsize=(14, 6))
+plt.axis("off")
+gs = fig_hm.add_gridspec(4, 10, hspace=1)
+gs.update(wspace=0.1, hspace=0.2)
+
+x = 0
+y = 0
+for i in range(config.NUM_KP):
+    if x < 10:
+        plt.subplot(gs[y, x])
+        plt.tick_params(axis='both', which='both', length=0)
+        plt.xticks([])
+        plt.yticks([])
+        plt.imshow(prediction[0][0][:, :, i])
+
+        plt.subplot(gs[y, x+1])
+        plt.tick_params(axis='both', which='both', length=0)
+        plt.xticks([])
+        plt.yticks([])
+        plt.imshow(gt_data[1][:, :, i])
+        x += 2
+    else:
+        x = 0
+        y += 1
 
 
 plt.show()
